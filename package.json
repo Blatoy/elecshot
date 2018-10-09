@@ -1,0 +1,20 @@
+{
+  "name": "ElecShot",
+  "version": "1.0.0",
+  "description": "Simple screenshot tool inspired by ShareX",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron ."
+  },
+  "repository": {},
+  "author": "Loïck Jeanneret",
+  "license": "ISC",
+  "bugs": {},
+  "devDependencies": {
+    "electron": "^2.0.11"
+  },
+  "dependencies": {
+    "screenshot-desktop": "^1.5.3"
+  }
+}

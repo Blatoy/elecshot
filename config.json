@@ -1,0 +1,16 @@
+{
+  "magnifier": {
+    "captureSize": 30,
+    "renderSize": 300,
+    "offset": 10
+  },
+  "colors": {
+    "overlay": "rgba(0, 0, 0, 0.5)"
+  },
+  "mouseSpeedModifier": 20,
+  "mouseSpeedModifierFast": 50,
+  "font": "bold 16px Arial",
+  "shortcuts": {
+    "defaultCapture": "CommandOrControl+Shift+S"
+  }
+}
