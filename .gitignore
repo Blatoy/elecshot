@@ -71,7 +71,3 @@ typings/
 
 # Serverless directories
 .serverless
-
-# Prevent images to be uploaded
-images
-
