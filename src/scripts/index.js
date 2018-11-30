@@ -44,7 +44,7 @@ let tick = 0,
 
 const screenCaptureImage = new Image();
 
-let STATES = {
+const STATES = {
   HIDDEN: 0, // app in background
   DISPLAYED: 1, // app displayed, user didn't interact
   START_SELECTION: 2, // user pressed left click
@@ -71,7 +71,6 @@ function render() {
     const magnifierContext = magnifierCanvas.getContext("2d");
 
     const pixelSize = config.magnifier.renderSize / config.magnifier.captureSize;
-
 
     const magnifierRectSource = {
       x: mousePos.x - config.magnifier.captureSize / 2,
