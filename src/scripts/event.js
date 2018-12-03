@@ -13,6 +13,11 @@ function onMouseMove(e) {
 
 function onMouseDown(e) {
   switch (currentState) {
+    case STATES.CAPTURING_WINDOWS:
+      if (e.button == 0) {
+        currentState = STATES.CAPTURE_WINDOW;
+      }
+      break;
     case STATES.DISPLAYED:
       if (e.button == 2) {
         currentState = STATES.START_HIDING;
@@ -20,6 +25,7 @@ function onMouseDown(e) {
         currentState = STATES.START_SELECTION;
       }
       break;
+    case STATES.CAPTURING_WINDOWS:
     case STATES.SELECTING:
       if (e.button == 2) {
         currentState = STATES.CANCEL_SELECTING;
@@ -53,6 +59,7 @@ function onKeyDown(e) {
           currentState = STATES.START_SELECTION;
           break;
         case STATES.SELECTING:
+        case STATES.CAPTURING_WINDOWS:
           currentState = STATES.CANCEL_SELECTING;
           break;
       }
@@ -63,6 +70,7 @@ function onKeyDown(e) {
           currentState = STATES.START_HIDING;
           break;
         case STATES.SELECTING:
+        case STATES.CAPTURING_WINDOWS:
           currentState = STATES.CANCEL_SELECTING;
           break;
       }
@@ -78,6 +86,16 @@ function onKeyDown(e) {
       break;
     case "ArrowDown":
       mousePos.y += mouseSpeed;
+      break;
+    case "a":
+      if (currentState === STATES.DISPLAYED) {
+        windowsManager.getWindowsRectangles().then((windowsRectangles_) => {
+          windowsRectangles = windowsRectangles_;
+          currentState = STATES.CAPTURING_WINDOWS;
+        }).catch(() => {});
+      } else if (currentState === STATES.CAPTURING_WINDOWS) {
+        capturingWindows = STATES.DISPLAYED;
+      }
       break;
     case "c":
       clipboard.writeText(currentPixelColor);

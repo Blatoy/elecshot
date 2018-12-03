@@ -52,10 +52,14 @@ const STATES = {
   CANCEL_SELECTING: 4, // user used right click to cancel
   CAPTURE: 5, // user released capture button
   CAPTURE_FINISHED: 6, // capture is done
-  START_HIDING: 7 // hide app
+  START_HIDING: 7, // hide app,
+  CAPTURING_WINDOWS: 8, // window selection
+  CAPTURE_WINDOW: 9 // capture window
 };
 
 let currentState = STATES.HIDDEN;
+// Should represent all the current windows open
+let windowsRectangles = [];
 
 function render() {
   update();
@@ -63,7 +67,7 @@ function render() {
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(screenCaptureImage, 0, 0);
 
-  if (currentState === STATES.DISPLAYED || currentState === STATES.SELECTING) {
+  if (currentState === STATES.DISPLAYED || currentState === STATES.SELECTING || currentState == STATES.CAPTURING_WINDOWS) {
     ctx.font = config.font;
     ctx.fillStyle = config.colors.overlay;
 
@@ -116,7 +120,7 @@ function render() {
       //const zoomFactor = config.magnifier.captureSize / config.magnifier.renderSize;
       // Full screen "darker screen"
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-    } else if (currentState === STATES.SELECTING) {
+    } else if (currentState === STATES.SELECTING || currentState == STATES.CAPTURING_WINDOWS) {
       // Horizontal "dark" bars
       ctx.fillRect(0, 0, canvas.width, selectionRect.y1);
       ctx.fillRect(0, selectionRect.y2, canvas.width, canvas.height - selectionRect.y2);
@@ -191,11 +195,12 @@ function render() {
     ctx.fillStyle = currentPixelColor;
     ctx.fillRect(mousePositionDisplay.x - 4, mousePositionDisplay.y + 24, 16, 16);
 
-  } else if (currentState === STATES.CAPTURE) {
+  } else if (currentState === STATES.CAPTURE || currentState === STATES.CAPTURE_WINDOW) {
     // Take a "screenshot" of the selected area
     const screenshotCanvas = document.createElement("canvas");
     const screenshotCtx = screenshotCanvas.getContext("2d");
     screenshotCtx.imageSmoothingEnabled = false;
+    con.log(selectionRect);
 
     screenshotCanvas.width = selectionRect.width;
     screenshotCanvas.height = selectionRect.height;
@@ -214,6 +219,15 @@ function render() {
 
   ctx.fillStyle = "white";
   ctx.fillText("State: " + currentState, 20, 20);
+  ctx.fillStyle = "rgba(255,255,255,0.05)";
+
+  for(let i = 0; i < windowsRectangles.length; ++i) {
+    //ctx.fillRect(windowsRectangles[i].x, windowsRectangles[i].y, windowsRectangles[i].w, windowsRectangles[i].h);
+  }
+}
+
+function sortSuitableWindows(a, b) {
+  return (a.d < b.d || a.s < b.s) ? -1 : 1;
 }
 
 function update() {
@@ -234,12 +248,43 @@ function update() {
       break;
   }
 
-  selectionRect.x1 = Math.min(mousePos.x, mouseDownPos.x);
-  selectionRect.x2 = Math.max(mousePos.x, mouseDownPos.x);
-  selectionRect.y1 = Math.min(mousePos.y, mouseDownPos.y);
-  selectionRect.y2 = Math.max(mousePos.y, mouseDownPos.y);
-  selectionRect.width = selectionRect.x2 - selectionRect.x1;
-  selectionRect.height = selectionRect.y2 - selectionRect.y1;
+  if(currentState == STATES.CAPTURING_WINDOWS && windowsRectangles.length > 0) {
+    let closestWindowCenterDistance = +Infinity;
+    let winRectangle = windowsRectangles[0];
+    let suitableRectangles = [];
+    for(let i = 0; i < windowsRectangles.length; ++i) {
+      let rect = windowsRectangles[i];
+      let dist = Math.pow(rect.x + rect.w / 2 - mousePos.x, 2) + Math.pow(rect.y + rect.h / 2 - mousePos.y, 2);
+      if(mousePos.x > rect.x && mousePos.x < rect.x + rect.w && mousePos.y > rect.y && mousePos.y < rect.y + rect.h) {
+        suitableRectangles.push({r: rect, d: dist, s: rect.w * rect.h});
+        closestWindowCenterDistance = dist;
+        winRectangle = rect;
+      }
+    }
+
+    suitableRectangles = suitableRectangles.sort(sortSuitableWindows);
+
+    if(suitableRectangles[0]) {
+      winRectangle = suitableRectangles[0].r;
+
+      selectionRect.x1 = winRectangle.x;
+      selectionRect.x2 = winRectangle.x + winRectangle.w;
+      selectionRect.y1 = winRectangle.y;
+      selectionRect.y2 = winRectangle.y + winRectangle.h;
+
+      selectionRect.width = winRectangle.w;
+      selectionRect.height = winRectangle.h;
+    }
+  }
+  else if(currentState != STATES.CAPTURE_WINDOW) {
+    selectionRect.x1 = Math.min(mousePos.x, mouseDownPos.x);
+    selectionRect.x2 = Math.max(mousePos.x, mouseDownPos.x);
+    selectionRect.y1 = Math.min(mousePos.y, mouseDownPos.y);
+    selectionRect.y2 = Math.max(mousePos.y, mouseDownPos.y);
+
+    selectionRect.width = selectionRect.x2 - selectionRect.x1;
+    selectionRect.height = selectionRect.y2 - selectionRect.y1;
+  }
 }
 
 function screenCaptured(imgPath) {
