@@ -14,6 +14,7 @@ const config = require(__dirname + "/../config.json");
 const utils = require(__dirname + "/scripts/utils.js");
 const file = require(__dirname + "/scripts/file.js");
 const event = require(__dirname + "/scripts/event.js");
+const windowsManager = require(__dirname + "/scripts/window-manager.js");
 
 event.registerEvents();
 event.setScreenCapturedCallback(screenCaptured);
@@ -200,7 +201,6 @@ function render() {
     const screenshotCanvas = document.createElement("canvas");
     const screenshotCtx = screenshotCanvas.getContext("2d");
     screenshotCtx.imageSmoothingEnabled = false;
-    con.log(selectionRect);
 
     screenshotCanvas.width = selectionRect.width;
     screenshotCanvas.height = selectionRect.height;
