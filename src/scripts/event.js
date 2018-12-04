@@ -17,6 +17,9 @@ function onMouseDown(e) {
       if (e.button == 0) {
         currentState = STATES.CAPTURE_WINDOW;
       }
+      else if (e.button == 2) {
+        currentState = STATES.CANCEL_SELECTING;
+      }
       break;
     case STATES.DISPLAYED:
       if (e.button == 2) {
@@ -25,7 +28,6 @@ function onMouseDown(e) {
         currentState = STATES.START_SELECTION;
       }
       break;
-    case STATES.CAPTURING_WINDOWS:
     case STATES.SELECTING:
       if (e.button == 2) {
         currentState = STATES.CANCEL_SELECTING;
@@ -61,6 +63,14 @@ function onKeyDown(e) {
         case STATES.SELECTING:
         case STATES.CAPTURING_WINDOWS:
           currentState = STATES.CANCEL_SELECTING;
+          break;
+      }
+      break;
+    case "Enter":
+      switch (currentState) {
+        case STATES.CAPTURING_WINDOWS:
+        case STATES.SELECTING:
+            currentState = STATES.CAPTURE_WINDOW;
           break;
       }
       break;
@@ -104,6 +114,18 @@ function onKeyDown(e) {
   }
 }
 
+function onKeyUp(e) {
+/*  switch (e.key) {
+    case "Shift":
+      switch (currentState) {
+        case STATES.SELECTING:
+          currentState = STATES.CAPTURE;
+          break;
+      }
+      break;
+    }*/
+}
+
 function onBeforeUnload() {
   globalShortcut.unregisterAll();
 }
@@ -130,7 +152,7 @@ module.exports.registerEvents = () => {
   document.onmousedown = onMouseDown;
   document.onmouseup = onMouseUp;
   document.onkeydown = onKeyDown;
-  // document.onkeyup = onKeyUp;
+  document.onkeyup = onKeyUp;
   document.onbeforeunload = onBeforeUnload;
 
   globalShortcut.register(config.shortcuts.defaultCapture, onCaptureShortcut);
