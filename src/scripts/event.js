@@ -11,6 +11,15 @@ function onMouseMove(e) {
   canvas.style.cursor = "crosshair";
 }
 
+function onMouseWheel(e) {
+  if(e.deltaY < 0) {
+    config.magnifier.renderSize *= 1.05;
+  }
+  else {
+    config.magnifier.renderSize /= 1.05;
+  }
+}
+
 function onMouseDown(e) {
   switch (currentState) {
     case STATES.CAPTURING_WINDOWS:
@@ -153,6 +162,7 @@ module.exports.registerEvents = () => {
   document.onmouseup = onMouseUp;
   document.onkeydown = onKeyDown;
   document.onkeyup = onKeyUp;
+  document.onmousewheel = onMouseWheel;
   document.onbeforeunload = onBeforeUnload;
 
   globalShortcut.register(config.shortcuts.defaultCapture, onCaptureShortcut);

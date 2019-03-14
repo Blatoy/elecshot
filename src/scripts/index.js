@@ -65,6 +65,8 @@ let windowsRectangles = [];
 function render() {
   update();
 
+  // config.magnifier.renderSize ++;
+
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(screenCaptureImage, 0, 0);
 
@@ -104,6 +106,16 @@ function render() {
     if (magnifierRectTarget.y + magnifierRectTarget.height > canvas.height) {
       magnifierRectTarget.y -= magnifierRectTarget.height + config.magnifier.offset * 2;
       mousePositionDisplay.y -= (magnifierRectTarget.height + config.magnifier.offset) * 2 + 35;
+    }
+
+    if (magnifierRectTarget.x < 0) {
+      magnifierRectTarget.x += magnifierRectTarget.width + config.magnifier.offset * 2;
+      mousePositionDisplay.x += (magnifierRectTarget.height + config.magnifier.offset);
+    }
+
+    if (magnifierRectTarget.y < 0) {
+      magnifierRectTarget.y += magnifierRectTarget.height + config.magnifier.offset * 2;
+      mousePositionDisplay.y += (magnifierRectTarget.height + config.magnifier.offset) * 2 + 35;
     }
 
     magnifierContext.imageSmoothingEnabled = false;
@@ -174,15 +186,9 @@ function render() {
     ctx.fillRect(magnifierRectTarget.x, magnifierRectTarget.y + (magnifierRectTarget.height) / 2, magnifierRectTarget.width, pixelSize);
     ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
 
-    let i = 0,
-      j = 0;
-    for (let x = magnifierRectTarget.x; x < magnifierRectTarget.x + magnifierRectTarget.width; x += Math.round(pixelSize)) {
-      i++;
-      for (let y = magnifierRectTarget.y; y < magnifierRectTarget.y + magnifierRectTarget.height; y += Math.round(pixelSize)) {
-        j++;
-        if ((i + j) % 2 == 0) {
+    for (let x = magnifierRectTarget.x; x < magnifierRectTarget.x + magnifierRectTarget.width; x += (pixelSize)) {
+      for (let y = magnifierRectTarget.y; y < magnifierRectTarget.y + magnifierRectTarget.height; y +=(pixelSize)) {
           ctx.strokeRect(x, y, pixelSize, pixelSize);
-        }
       }
     }
 
@@ -216,14 +222,13 @@ function render() {
     requestAnimationFrame(render);
   }
 
-
-  ctx.fillStyle = "white";
+  /*ctx.fillStyle = "white";
   ctx.fillText("State: " + currentState, 20, 20);
   ctx.fillStyle = "rgba(255,255,255,0.05)";
 
-  for(let i = 0; i < windowsRectangles.length; ++i) {
+  for (let i = 0; i < windowsRectangles.length; ++i) {
     //ctx.fillRect(windowsRectangles[i].x, windowsRectangles[i].y, windowsRectangles[i].w, windowsRectangles[i].h);
-  }
+  }*/
 }
 
 function sortSuitableWindows(a, b) {
@@ -248,15 +253,19 @@ function update() {
       break;
   }
 
-  if(currentState == STATES.CAPTURING_WINDOWS && windowsRectangles.length > 0) {
+  if (currentState == STATES.CAPTURING_WINDOWS && windowsRectangles.length > 0) {
     let closestWindowCenterDistance = +Infinity;
     let winRectangle = windowsRectangles[0];
     let suitableRectangles = [];
-    for(let i = 0; i < windowsRectangles.length; ++i) {
+    for (let i = 0; i < windowsRectangles.length; ++i) {
       let rect = windowsRectangles[i];
       let dist = Math.pow(rect.x + rect.w / 2 - mousePos.x, 2) + Math.pow(rect.y + rect.h / 2 - mousePos.y, 2);
-      if(mousePos.x > rect.x && mousePos.x < rect.x + rect.w && mousePos.y > rect.y && mousePos.y < rect.y + rect.h) {
-        suitableRectangles.push({r: rect, d: dist, s: rect.w * rect.h});
+      if (mousePos.x > rect.x && mousePos.x < rect.x + rect.w && mousePos.y > rect.y && mousePos.y < rect.y + rect.h) {
+        suitableRectangles.push({
+          r: rect,
+          d: dist,
+          s: rect.w * rect.h
+        });
         closestWindowCenterDistance = dist;
         winRectangle = rect;
       }
@@ -264,7 +273,7 @@ function update() {
 
     suitableRectangles = suitableRectangles.sort(sortSuitableWindows);
 
-    if(suitableRectangles[0]) {
+    if (suitableRectangles[0]) {
       winRectangle = suitableRectangles[0].r;
 
       selectionRect.x1 = winRectangle.x;
@@ -275,8 +284,7 @@ function update() {
       selectionRect.width = winRectangle.w;
       selectionRect.height = winRectangle.h;
     }
-  }
-  else if(currentState != STATES.CAPTURE_WINDOW) {
+  } else if (currentState != STATES.CAPTURE_WINDOW) {
     selectionRect.x1 = Math.min(mousePos.x, mouseDownPos.x);
     selectionRect.x2 = Math.max(mousePos.x, mouseDownPos.x);
     selectionRect.y1 = Math.min(mousePos.y, mouseDownPos.y);
@@ -293,6 +301,7 @@ function screenCaptured(imgPath) {
     fs.unlink(imgPath, () => {});
 
     currentWindow.show();
+    currentWindow.setFullScreen(false);
     currentWindow.setFullScreen(true);
 
     canvas.width = screenCaptureImage.width;
