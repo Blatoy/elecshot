@@ -180,11 +180,13 @@ function render() {
     // Draw the small canvas on the main canvas to "zoom"
     ctx.drawImage(magnifierCanvas, magnifierRectTarget.x, magnifierRectTarget.y, magnifierRectTarget.width, magnifierRectTarget.height);
 
+   // let color = ((p[0] + p[1] + p[2]) / 3);
     ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
     ctx.lineWidth = 1;
     ctx.fillRect(magnifierRectTarget.x + (magnifierRectTarget.width) / 2, magnifierRectTarget.y, pixelSize, magnifierRectTarget.height);
     ctx.fillRect(magnifierRectTarget.x, magnifierRectTarget.y + (magnifierRectTarget.height) / 2, magnifierRectTarget.width, pixelSize);
-    ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
 
     for (let x = magnifierRectTarget.x; x < magnifierRectTarget.x + magnifierRectTarget.width; x += (pixelSize)) {
       for (let y = magnifierRectTarget.y; y < magnifierRectTarget.y + magnifierRectTarget.height; y +=(pixelSize)) {
@@ -220,6 +222,13 @@ function render() {
 
   if (currentState !== STATES.HIDDEN) {
     requestAnimationFrame(render);
+  }
+
+  if(config.uploadToImgur && currentState != STATES.SELECTING) {
+    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.font = config.font;
+    ctx.textAlign = "left";
+    ctx.fillText("Uploading to imgur", 2, 20);
   }
 
   /*ctx.fillStyle = "white";

@@ -1,3 +1,5 @@
+const imgur = require("imgur");
+
 module.exports.getFileName = () => {
   // TODO: Allow custom format
   const d = new Date();
@@ -11,4 +13,14 @@ module.exports.saveAndCopyCanvasImage = (path, canvas) => {
   fs.writeFile(path, buf, () => {
     clipboard.writeImage(path);
   });
+
+  if(config.uploadToImgur) {
+    imgur.uploadBase64(data)
+    .then(function (json) {
+        clipboard.writeText(json.data.link);
+    })
+    .catch(function (err) {
+        console.error(err.message);
+    });
+  }
 };

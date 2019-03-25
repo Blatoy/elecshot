@@ -120,6 +120,9 @@ function onKeyDown(e) {
       clipboard.writeText(currentPixelColor);
       currentState = STATES.START_HIDING;
       break;
+    case "i":
+      config.uploadToImgur = !config.uploadToImgur;
+      break;
   }
 }
 

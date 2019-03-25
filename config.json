@@ -1,4 +1,5 @@
 {
+  "uploadToImgur": false,
   "magnifier": {
     "captureSize": 30,
     "renderSize": 300,
