@@ -14,7 +14,6 @@ const config = require(__dirname + "/../config.json");
 const utils = require(__dirname + "/scripts/utils.js");
 const file = require(__dirname + "/scripts/file.js");
 const event = require(__dirname + "/scripts/event.js");
-const windowsManager = require(__dirname + "/scripts/window-manager.js");
 
 event.registerEvents();
 event.setScreenCapturedCallback(screenCaptured);
@@ -180,7 +179,7 @@ function render() {
     // Draw the small canvas on the main canvas to "zoom"
     ctx.drawImage(magnifierCanvas, magnifierRectTarget.x, magnifierRectTarget.y, magnifierRectTarget.width, magnifierRectTarget.height);
 
-   // let color = ((p[0] + p[1] + p[2]) / 3);
+    // let color = ((p[0] + p[1] + p[2]) / 3);
     ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
     ctx.lineWidth = 1;
     ctx.fillRect(magnifierRectTarget.x + (magnifierRectTarget.width) / 2, magnifierRectTarget.y, pixelSize, magnifierRectTarget.height);
@@ -189,8 +188,8 @@ function render() {
     ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
 
     for (let x = magnifierRectTarget.x; x < magnifierRectTarget.x + magnifierRectTarget.width; x += (pixelSize)) {
-      for (let y = magnifierRectTarget.y; y < magnifierRectTarget.y + magnifierRectTarget.height; y +=(pixelSize)) {
-          ctx.strokeRect(x, y, pixelSize, pixelSize);
+      for (let y = magnifierRectTarget.y; y < magnifierRectTarget.y + magnifierRectTarget.height; y += (pixelSize)) {
+        ctx.strokeRect(x, y, pixelSize, pixelSize);
       }
     }
 
@@ -224,7 +223,7 @@ function render() {
     requestAnimationFrame(render);
   }
 
-  if(config.uploadToImgur && currentState != STATES.SELECTING) {
+  if (config.uploadToImgur && currentState != STATES.SELECTING) {
     ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
     ctx.font = config.font;
     ctx.textAlign = "left";
@@ -309,14 +308,15 @@ function screenCaptured(imgPath) {
   screenCaptureImage.onload = () => {
     fs.unlink(imgPath, () => {});
 
+    let screenPos = remote.screen.getCursorScreenPoint();
+    canvas.width = remote.screen.getDisplayNearestPoint(screenPos).size.width;
+    canvas.height = remote.screen.getDisplayNearestPoint(screenPos).size.height;
+    
+    currentState = STATES.DISPLAYED;
+    render();
+
     currentWindow.show();
     currentWindow.setFullScreen(false);
     currentWindow.setFullScreen(true);
-
-    canvas.width = screenCaptureImage.width;
-    canvas.height = screenCaptureImage.height;
-
-    currentState = STATES.DISPLAYED;
-    render();
   };
 }

@@ -1,10 +1,10 @@
 const screenshot = require("screenshot-desktop");
 const file = require(__dirname + "/file.js");
+const windowsManager = require(__dirname + "/window-manager.js");
 
 let screenCapturedCallback = () => {};
 
 function onMouseMove(e) {
-  // TODO: Handle windows render scaling...
   const rect = canvas.getBoundingClientRect();
   mousePos.x = (e.clientX - rect.left);
   mousePos.y = (e.clientY - rect.top);
@@ -12,10 +12,9 @@ function onMouseMove(e) {
 }
 
 function onMouseWheel(e) {
-  if(e.deltaY < 0) {
+  if (e.deltaY < 0) {
     config.magnifier.renderSize *= 1.05;
-  }
-  else {
+  } else {
     config.magnifier.renderSize /= 1.05;
   }
 }
@@ -25,8 +24,7 @@ function onMouseDown(e) {
     case STATES.CAPTURING_WINDOWS:
       if (e.button == 0) {
         currentState = STATES.CAPTURE_WINDOW;
-      }
-      else if (e.button == 2) {
+      } else if (e.button == 2) {
         currentState = STATES.CANCEL_SELECTING;
       }
       break;
@@ -79,7 +77,7 @@ function onKeyDown(e) {
       switch (currentState) {
         case STATES.CAPTURING_WINDOWS:
         case STATES.SELECTING:
-            currentState = STATES.CAPTURE_WINDOW;
+          currentState = STATES.CAPTURE_WINDOW;
           break;
       }
       break;
@@ -127,15 +125,15 @@ function onKeyDown(e) {
 }
 
 function onKeyUp(e) {
-/*  switch (e.key) {
-    case "Shift":
-      switch (currentState) {
-        case STATES.SELECTING:
-          currentState = STATES.CAPTURE;
-          break;
-      }
-      break;
-    }*/
+  /*  switch (e.key) {
+      case "Shift":
+        switch (currentState) {
+          case STATES.SELECTING:
+            currentState = STATES.CAPTURE;
+            break;
+        }
+        break;
+      }*/
 }
 
 function onBeforeUnload() {
@@ -143,13 +141,27 @@ function onBeforeUnload() {
 }
 
 function onCaptureShortcut() {
+  let screenPos = remote.screen.getCursorScreenPoint();
+  let currentDisplay = remote.screen.getDisplayNearestPoint(screenPos);
+
   screenshot.listDisplays().then((displays) => {
-    // TODO: Select correct screen
+    // Find correct screen
+    let screenshotDisplay = displays[0];
+    for (let i = 0; i < displays.length; i++) {
+      if (currentDisplay.bounds.x == displays[i].offsetX && currentDisplay.bounds.y == displays[i].offsetY) {
+        screenshotDisplay = displays[i];
+        break;
+      }
+    }
+
     screenshot({
         filename: file.getFileName() + ".png",
-        screen: displays[displays.length - 1].id
+        screen: screenshotDisplay.id
       })
       .then((imgPath) => {
+
+        currentWindow.setFullScreen(false);
+        currentWindow.setPosition(screenshotDisplay.offsetX, screenshotDisplay.offsetY);
         screenCapturedCallback(imgPath);
       });
   });
