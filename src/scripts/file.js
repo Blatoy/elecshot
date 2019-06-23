@@ -1,4 +1,5 @@
 const imgur = require("imgur");
+const clipboard = require("electron").clipboard;
 
 module.exports.getFileName = () => {
   // TODO: Allow custom format
