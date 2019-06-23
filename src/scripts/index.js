@@ -1,13 +1,5 @@
-const {
-  remote,
-  clipboard
-} = require('electron')
-const {
-  app,
-  globalShortcut
-} = remote;
+const remote = require('electron').remote;
 
-const path = require("path");
 const fs = require("fs");
 
 const config = require(__dirname + "/../config.json");
@@ -18,7 +10,7 @@ const event = require(__dirname + "/scripts/event.js");
 event.registerEvents();
 event.setScreenCapturedCallback(screenCaptured);
 
-const currentWindow = remote.getCurrentWindow()
+const currentWindow = remote.getCurrentWindow();
 const canvas = document.getElementById("main-canvas");
 const ctx = canvas.getContext("2d");
 
@@ -63,8 +55,6 @@ let windowsRectangles = [];
 
 function render() {
   update();
-
-  // config.magnifier.renderSize ++;
 
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(screenCaptureImage, 0, 0);
@@ -229,14 +219,6 @@ function render() {
     ctx.textAlign = "left";
     ctx.fillText("Uploading to imgur", 2, 20);
   }
-
-  /*ctx.fillStyle = "white";
-  ctx.fillText("State: " + currentState, 20, 20);
-  ctx.fillStyle = "rgba(255,255,255,0.05)";
-
-  for (let i = 0; i < windowsRectangles.length; ++i) {
-    //ctx.fillRect(windowsRectangles[i].x, windowsRectangles[i].y, windowsRectangles[i].w, windowsRectangles[i].h);
-  }*/
 }
 
 function sortSuitableWindows(a, b) {
@@ -311,7 +293,7 @@ function screenCaptured(imgPath) {
     let screenPos = remote.screen.getCursorScreenPoint();
     canvas.width = remote.screen.getDisplayNearestPoint(screenPos).size.width;
     canvas.height = remote.screen.getDisplayNearestPoint(screenPos).size.height;
-    
+
     currentState = STATES.DISPLAYED;
     render();
 

@@ -124,18 +124,6 @@ function onKeyDown(e) {
   }
 }
 
-function onKeyUp(e) {
-  /*  switch (e.key) {
-      case "Shift":
-        switch (currentState) {
-          case STATES.SELECTING:
-            currentState = STATES.CAPTURE;
-            break;
-        }
-        break;
-      }*/
-}
-
 function onBeforeUnload() {
   globalShortcut.unregisterAll();
 }
@@ -176,60 +164,8 @@ module.exports.registerEvents = () => {
   document.onmousedown = onMouseDown;
   document.onmouseup = onMouseUp;
   document.onkeydown = onKeyDown;
-  document.onkeyup = onKeyUp;
   document.onmousewheel = onMouseWheel;
   document.onbeforeunload = onBeforeUnload;
 
   globalShortcut.register(config.shortcuts.defaultCapture, onCaptureShortcut);
 };
-
-
-/*
-document.onmousedown = (e) => {
-  if (!mouseDown) {
-    mouseDownPos.x = mousePos.x;
-    mouseDownPos.y = mousePos.y;
-    mouseDown = true;
-  } else {
-    mouseDown = false;
-  }
-};
-
-document.onmouseup = (e) => {
-  if (mouseDown) {
-    mouseDown = false;
-    captureScreen = true;
-  }
-};
-
-document.onkeydown = (e) => {
-  let moveSpeed = 1;
-  if (e.ctrlKey) {
-    moveSpeed *= 5;
-  }
-
-  canvas.style.cursor = "none";
-
-  switch (e.key) {
-    case "Escape":
-      if (mouseDown) {
-        mouseDown = false;
-      } else {
-        stopRendering = true;
-        currentWindow.hide();
-      }
-      break;
-    case "ArrowLeft":
-      mousePos.x -= moveSpeed;
-      break;
-    case "ArrowRight":
-      mousePos.x += moveSpeed;
-      break;
-    case "ArrowUp":
-      mousePos.y -= moveSpeed;
-      break;
-    case "ArrowDown":
-      mousePos.y += moveSpeed;
-      break;
-  }
-};*/

@@ -4,7 +4,7 @@ module.exports.getFileName = () => {
   // TODO: Allow custom format
   const d = new Date();
   return d.getFullYear() + "-" + d.getMonth() + "-" + d.getDay() + "_" + d.getHours() + "_" + d.getMinutes() + "-" + d.getSeconds();
-}
+};
 
 module.exports.saveAndCopyCanvasImage = (path, canvas) => {
   const data = canvas.toDataURL().replace(/^data:image\/\w+;base64,/, "");
@@ -14,13 +14,13 @@ module.exports.saveAndCopyCanvasImage = (path, canvas) => {
     clipboard.writeImage(path);
   });
 
-  if(config.uploadToImgur) {
+  if (config.uploadToImgur) {
     imgur.uploadBase64(data)
-    .then(function (json) {
+      .then(function (json) {
         clipboard.writeText(json.data.link);
-    })
-    .catch(function (err) {
+      })
+      .catch(function (err) {
         console.error(err.message);
-    });
+      });
   }
 };
