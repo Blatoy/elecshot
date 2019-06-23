@@ -14,9 +14,11 @@ const currentWindow = remote.getCurrentWindow();
 const canvas = document.getElementById("main-canvas");
 const ctx = canvas.getContext("2d");
 
-let drawingColor = "rgba(255, 0, 0, 0.9)";
+let drawingColor = "rgb(255, 0, 0)";
 let drawnLines = [];
-let currentDrawingPoints = [];
+let currentDrawingPoints = {
+  points: []
+};
 
 const mousePos = {
   x: 0,
@@ -39,6 +41,7 @@ let tick = 0,
   currentPixelColor = "#000000";
 
 let drawingPenWidth = 5;
+let drawingPenOpacity = 0.7;
 const screenCaptureImage = new Image();
 
 const STATES = {
@@ -69,27 +72,39 @@ function render() {
   // Render drawings
   if (currentState !== STATES.HIDDEN) {
 
-    ctx.strokeStyle = drawingColor;
-    ctx.lineWidth = drawingPenWidth;
+    ctx.lineCap = "round";
 
     for (let i = 0; i < drawnLines.length; i++) {
+      ctx.strokeStyle = drawnLines[i].drawingColor;
+      ctx.globalAlpha = drawnLines[i].drawingPenOpacity;
+      ctx.lineWidth = drawnLines[i].drawingPenWidth;
+
       ctx.beginPath();
-      ctx.moveTo(drawnLines[i][0].x, drawnLines[i][0].y);
-      for (let j = 1; j < drawnLines[i].length; j++) {
-        ctx.lineTo(drawnLines[i][j].x, drawnLines[i][j].y);
+      ctx.moveTo(drawnLines[i].points[0].x, drawnLines[i].points[0].y);
+      for (let j = 1; j < drawnLines[i].points.length; j++) {
+        ctx.lineTo(drawnLines[i].points[j].x, drawnLines[i].points[j].y);
       }
       ctx.stroke();
     }
 
-    if (currentDrawingPoints.length > 1) {
+    if (currentDrawingPoints.points.length > 1) {
+      ctx.strokeStyle = drawingColor;
+      ctx.globalAlpha = drawingPenOpacity;
+      ctx.lineWidth = drawingPenWidth;
       ctx.beginPath();
-      ctx.moveTo(currentDrawingPoints[0].x, currentDrawingPoints[0].y);
-      for (let i = 0; i < currentDrawingPoints.length; i++) {
-        ctx.lineTo(currentDrawingPoints[i].x, currentDrawingPoints[i].y);
+      ctx.moveTo(currentDrawingPoints.points[0].x, currentDrawingPoints.points[0].y);
+      for (let i = 0; i < currentDrawingPoints.points.length; i++) {
+        ctx.lineTo(currentDrawingPoints.points[i].x, currentDrawingPoints.points[i].y);
       }
       ctx.stroke();
     }
+
+    ctx.globalAlpha = 1;
+
+    let p = ctx.getImageData(mousePos.x, mousePos.y, 1, 1).data;
+    currentPixelColor = "#" + ("000000" + utils.rgbToHex(p[0], p[1], p[2])).slice(-6);
   }
+
 
   if (currentState === STATES.DISPLAYED || currentState === STATES.SELECTING || currentState == STATES.CAPTURING_WINDOWS) {
     ctx.font = config.font;
@@ -126,7 +141,7 @@ function render() {
 
     if (magnifierRectTarget.y + magnifierRectTarget.height > canvas.height) {
       magnifierRectTarget.y -= magnifierRectTarget.height + config.magnifier.offset * 2;
-      mousePositionDisplay.y -= (magnifierRectTarget.height + config.magnifier.offset) * 2 + 35;
+      mousePositionDisplay.y -= (magnifierRectTarget.height + config.magnifier.offset) * 2 + 70;
     }
 
     if (magnifierRectTarget.x < 0) {
@@ -143,9 +158,6 @@ function render() {
 
     magnifierCanvas.width = magnifierRectSource.width;
     magnifierCanvas.height = magnifierRectSource.height;
-
-    let p = ctx.getImageData(mousePos.x, mousePos.y, 1, 1).data;
-    currentPixelColor = "#" + ("000000" + utils.rgbToHex(p[0], p[1], p[2])).slice(-6);
 
     // Draw a small portion of the image on a fake canvas
     magnifierContext.drawImage(canvas, magnifierRectSource.x, magnifierRectSource.y, magnifierRectSource.width, magnifierRectSource.height, 0, 0, magnifierRectSource.width, magnifierRectSource.height);
@@ -253,9 +265,13 @@ function render() {
 
   if (currentState === STATES.DRAW_LINES) {
     ctx.fillStyle = drawingColor;
+    ctx.globalAlpha = drawingPenOpacity;
+    
     ctx.beginPath();
-    ctx.ellipse(mousePos.x, mousePos.y, drawingPenWidth, drawingPenWidth, 0, 2 * Math.PI, 0);
+    ctx.ellipse(mousePos.x, mousePos.y, drawingPenWidth / 2, drawingPenWidth / 2, 0, 2 * Math.PI, 0);
     ctx.fill();
+
+    ctx.globalAlpha = 1;
   }
 }
 
@@ -332,7 +348,6 @@ function screenCaptured(imgPath, width, height) {
     canvas.width = width;
     canvas.height = height;
 
-    currentState = STATES.DISPLAYED;
     render();
   };
 }

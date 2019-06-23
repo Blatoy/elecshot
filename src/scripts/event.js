@@ -1,8 +1,10 @@
 const screenshot = require("screenshot-desktop");
+const clipboard = require("electron").clipboard;
 const file = require(__dirname + "/file.js");
 const windowsManager = require(__dirname + "/window-manager.js");
 
 let screenCapturedCallback = () => {};
+let keepDrawing = false;
 
 function onMouseMove(e) {
   const rect = canvas.getBoundingClientRect();
@@ -11,9 +13,10 @@ function onMouseMove(e) {
   canvas.style.cursor = "crosshair";
   switch (currentState) {
     case STATES.DRAWING_LINES:
-      currentDrawingPoints.push({
+      currentDrawingPoints.points.push({
         x: mousePos.x,
-        y: mousePos.y
+        y: mousePos.y,
+        color: currentPixelColor
       });
       break;
   }
@@ -62,9 +65,18 @@ function onMouseUp(e) {
       }
       break;
     case STATES.DRAWING_LINES:
+      currentDrawingPoints.drawingColor = drawingColor;
+      currentDrawingPoints.drawingPenOpacity = drawingPenOpacity;
+      currentDrawingPoints.drawingPenWidth = drawingPenWidth;
+
       drawnLines.push(currentDrawingPoints); // TODO: Fix all of this bs global variables
-      currentDrawingPoints = [];
-      currentState = STATES.DRAW_LINES;
+      currentDrawingPoints = {points: []};
+      if(!keepDrawing) {
+        currentState = STATES.DISPLAYED;
+      }
+      else {
+        currentState = STATES.DRAW_LINES;
+      }
       break;
   }
 }
@@ -140,12 +152,39 @@ function onKeyDown(e) {
       break;
     case "d":
       if (currentState === STATES.DISPLAYED) {
+        keepDrawing = e.altKey;
         currentState = STATES.DRAW_LINES;
       }
       break;
     case "c":
-      clipboard.writeText(currentPixelColor);
-      currentState = STATES.START_HIDING;
+      if (currentState === STATES.DRAW_LINES) {
+        drawingColor = currentPixelColor;
+      } else {
+        clipboard.writeText(currentPixelColor);
+        currentState = STATES.START_HIDING;
+      }
+      break;
+    case "-":
+      if (currentState === STATES.DRAW_LINES) {
+        if (e.shiftKey) {
+          drawingPenOpacity -= 0.1;
+          drawingPenOpacity = Math.max(drawingPenOpacity, 0.1);
+          drawingPenOpacity = Math.min(drawingPenOpacity, 1);
+        } else {
+          drawingPenWidth /= 1.2;
+        }
+      }
+      break;
+    case "+":
+      if (currentState === STATES.DRAW_LINES) {
+        if (e.shiftKey) {
+          drawingPenOpacity += 0.1;
+          drawingPenOpacity = Math.max(drawingPenOpacity, 0.1);
+          drawingPenOpacity = Math.min(drawingPenOpacity, 1);
+        } else {
+          drawingPenWidth *= 1.2;
+        }
+      }
       break;
     case "i":
       config.uploadToImgur = !config.uploadToImgur;
@@ -196,6 +235,8 @@ function onCaptureShortcut() {
       })
       .then((imgPath) => {
         currentWindow.show();
+        currentState = STATES.DISPLAYED;
+
         currentWindow.setSize(maxX - minX, maxY - minY);
         currentWindow.setPosition(minX, minY);
         screenCapturedCallback(imgPath, maxX - minX, maxY - minY);
