@@ -15,7 +15,11 @@ function createWindow() {
     height: 600,
     alwaysOnTop: true,
     show: false,
-    frame: false
+    frame: false,
+    enableLargerThanScreen: true,
+    webPreferences: {
+      nodeIntegration: true
+    }
   });
 
   win.setMenu(null);
