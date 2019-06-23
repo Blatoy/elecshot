@@ -9,6 +9,14 @@ function onMouseMove(e) {
   mousePos.x = (e.clientX - rect.left);
   mousePos.y = (e.clientY - rect.top);
   canvas.style.cursor = "crosshair";
+  switch (currentState) {
+    case STATES.DRAWING_LINES:
+      currentDrawingPoints.push({
+        x: mousePos.x,
+        y: mousePos.y
+      });
+      break;
+  }
 }
 
 function onMouseWheel(e) {
@@ -40,6 +48,9 @@ function onMouseDown(e) {
         currentState = STATES.CANCEL_SELECTING;
       }
       break;
+    case STATES.DRAW_LINES:
+      currentState = STATES.DRAWING_LINES;
+      break;
   }
 }
 
@@ -49,6 +60,11 @@ function onMouseUp(e) {
       if (e.button == 0) {
         currentState = STATES.CAPTURE;
       }
+      break;
+    case STATES.DRAWING_LINES:
+      drawnLines.push(currentDrawingPoints); // TODO: Fix all of this bs global variables
+      currentDrawingPoints = [];
+      currentState = STATES.DRAW_LINES;
       break;
   }
 }
@@ -79,6 +95,9 @@ function onKeyDown(e) {
         case STATES.SELECTING:
           currentState = STATES.CAPTURE_WINDOW;
           break;
+        case STATES.DRAW_LINES:
+          currentState = STATES.DISPLAYED;
+          break;
       }
       break;
     case "Escape":
@@ -89,6 +108,11 @@ function onKeyDown(e) {
         case STATES.SELECTING:
         case STATES.CAPTURING_WINDOWS:
           currentState = STATES.CANCEL_SELECTING;
+          break;
+        case STATES.DRAW_LINES:
+        case STATES.DRAWING_LINES:
+          drawnLines = [];
+          currentState = STATES.DISPLAYED;
           break;
       }
       break;
@@ -114,6 +138,11 @@ function onKeyDown(e) {
         capturingWindows = STATES.DISPLAYED;
       }
       break;
+    case "d":
+      if (currentState === STATES.DISPLAYED) {
+        currentState = STATES.DRAW_LINES;
+      }
+      break;
     case "c":
       clipboard.writeText(currentPixelColor);
       currentState = STATES.START_HIDING;
@@ -132,25 +161,44 @@ function onCaptureShortcut() {
   let screenPos = remote.screen.getCursorScreenPoint();
   let currentDisplay = remote.screen.getDisplayNearestPoint(screenPos);
 
+  drawnLines = [];
+
   screenshot.listDisplays().then((displays) => {
-    // Find correct screen
+    // Find min x/y
     let screenshotDisplay = displays[0];
-    for (let i = 0; i < displays.length; i++) {
-      if (currentDisplay.bounds.x == displays[i].offsetX && currentDisplay.bounds.y == displays[i].offsetY) {
-        screenshotDisplay = displays[i];
-        break;
+    let minX = displays[0].offsetX;
+    let minY = displays[0].offsetY;
+    let maxX = minX + displays[0].width;
+    let maxY = minY + displays[0].height;
+    for (let i = 1; i < displays.length; i++) {
+      if (displays[i].offsetX < minX) {
+        minX = displays[i].offsetX;
+      }
+
+      if (displays[i].offsetY < minY) {
+        minY = displays[i].offsetY;
+      }
+
+      if (displays[i].offsetX + displays[i].width > maxX) {
+        maxX = displays[i].offsetY + displays[i].width;
+      }
+
+      if (displays[i].offsetY + displays[i].height > maxY) {
+        maxY = displays[i].offsetY + displays[i].height;
       }
     }
 
+
     screenshot({
         filename: file.getFileName() + ".png",
-        screen: screenshotDisplay.id
+        screen: screenshotDisplay.id,
+        linuxLibrary: "scrot"
       })
       .then((imgPath) => {
-
-        currentWindow.setFullScreen(false);
-        currentWindow.setPosition(screenshotDisplay.offsetX, screenshotDisplay.offsetY);
-        screenCapturedCallback(imgPath);
+        currentWindow.show();
+        currentWindow.setSize(maxX - minX, maxY - minY);
+        currentWindow.setPosition(minX, minY);
+        screenCapturedCallback(imgPath, maxX - minX, maxY - minY);
       });
   });
 }
@@ -167,5 +215,5 @@ module.exports.registerEvents = () => {
   document.onmousewheel = onMouseWheel;
   document.onbeforeunload = onBeforeUnload;
 
-  globalShortcut.register(config.shortcuts.defaultCapture, onCaptureShortcut);
+  remote.globalShortcut.register(config.shortcuts.defaultCapture, onCaptureShortcut);
 };

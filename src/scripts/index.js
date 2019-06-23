@@ -14,6 +14,10 @@ const currentWindow = remote.getCurrentWindow();
 const canvas = document.getElementById("main-canvas");
 const ctx = canvas.getContext("2d");
 
+let drawingColor = "rgba(255, 0, 0, 0.9)";
+let drawnLines = [];
+let currentDrawingPoints = [];
+
 const mousePos = {
   x: 0,
   y: 0
@@ -34,6 +38,7 @@ const selectionRect = {
 let tick = 0,
   currentPixelColor = "#000000";
 
+let drawingPenWidth = 5;
 const screenCaptureImage = new Image();
 
 const STATES = {
@@ -46,7 +51,9 @@ const STATES = {
   CAPTURE_FINISHED: 6, // capture is done
   START_HIDING: 7, // hide app,
   CAPTURING_WINDOWS: 8, // window selection
-  CAPTURE_WINDOW: 9 // capture window
+  CAPTURE_WINDOW: 9, // capture window
+  DRAW_LINES: 10,
+  DRAWING_LINES: 11,
 };
 
 let currentState = STATES.HIDDEN;
@@ -58,6 +65,31 @@ function render() {
 
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(screenCaptureImage, 0, 0);
+
+  // Render drawings
+  if (currentState !== STATES.HIDDEN) {
+
+    ctx.strokeStyle = drawingColor;
+    ctx.lineWidth = drawingPenWidth;
+
+    for (let i = 0; i < drawnLines.length; i++) {
+      ctx.beginPath();
+      ctx.moveTo(drawnLines[i][0].x, drawnLines[i][0].y);
+      for (let j = 1; j < drawnLines[i].length; j++) {
+        ctx.lineTo(drawnLines[i][j].x, drawnLines[i][j].y);
+      }
+      ctx.stroke();
+    }
+
+    if (currentDrawingPoints.length > 1) {
+      ctx.beginPath();
+      ctx.moveTo(currentDrawingPoints[0].x, currentDrawingPoints[0].y);
+      for (let i = 0; i < currentDrawingPoints.length; i++) {
+        ctx.lineTo(currentDrawingPoints[i].x, currentDrawingPoints[i].y);
+      }
+      ctx.stroke();
+    }
+  }
 
   if (currentState === STATES.DISPLAYED || currentState === STATES.SELECTING || currentState == STATES.CAPTURING_WINDOWS) {
     ctx.font = config.font;
@@ -205,7 +237,6 @@ function render() {
     file.saveAndCopyCanvasImage("./images/" + file.getFileName() + ".png", screenshotCanvas);
 
     currentWindow.hide();
-    // currentState = STATES.CAPTURE_FINISHED;
     currentState = STATES.START_HIDING;
   }
 
@@ -214,10 +245,17 @@ function render() {
   }
 
   if (config.uploadToImgur && currentState != STATES.SELECTING) {
-    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
     ctx.font = config.font;
     ctx.textAlign = "left";
     ctx.fillText("Uploading to imgur", 2, 20);
+  }
+
+  if (currentState === STATES.DRAW_LINES) {
+    ctx.fillStyle = drawingColor;
+    ctx.beginPath();
+    ctx.ellipse(mousePos.x, mousePos.y, drawingPenWidth, drawingPenWidth, 0, 2 * Math.PI, 0);
+    ctx.fill();
   }
 }
 
@@ -285,20 +323,16 @@ function update() {
   }
 }
 
-function screenCaptured(imgPath) {
+function screenCaptured(imgPath, width, height) {
   screenCaptureImage.src = imgPath;
   screenCaptureImage.onload = () => {
     fs.unlink(imgPath, () => {});
 
     let screenPos = remote.screen.getCursorScreenPoint();
-    canvas.width = remote.screen.getDisplayNearestPoint(screenPos).size.width;
-    canvas.height = remote.screen.getDisplayNearestPoint(screenPos).size.height;
+    canvas.width = width;
+    canvas.height = height;
 
     currentState = STATES.DISPLAYED;
     render();
-
-    currentWindow.show();
-    currentWindow.setFullScreen(false);
-    currentWindow.setFullScreen(true);
   };
 }
