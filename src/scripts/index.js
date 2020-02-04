@@ -7,6 +7,8 @@ const utils = require(__dirname + "/scripts/utils.js");
 const file = require(__dirname + "/scripts/file.js");
 const event = require(__dirname + "/scripts/event.js");
 
+const ntc = require(__dirname + "/scripts/ntc.js");
+
 event.registerEvents();
 event.setScreenCapturedCallback(screenCaptured);
 
