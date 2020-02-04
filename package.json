@@ -12,10 +12,10 @@
   "license": "ISC",
   "bugs": {},
   "devDependencies": {
-    "electron": "^5.0.5"
+    "electron": "^8.0.0"
   },
   "dependencies": {
     "imgur": "^0.3.1",
-    "screenshot-desktop": "Blatoy/screenshot-desktop"
+    "screenshot-desktop": "github:Blatoy/screenshot-desktop"
   }
 }
