@@ -12,6 +12,6 @@
   "mouseSpeedModifierFast": 50,
   "font": "bold 16px Arial",
   "shortcuts": {
-    "defaultCapture": "CommandOrControl+Shift+S"
+    "defaultCapture": "CommandOrControl+Shift+F11"
   }
 }
