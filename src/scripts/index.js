@@ -38,13 +38,11 @@ const selectionRect = {
   width: 0,
   height: 0
 };
-
-let tick = 0,
-  currentPixelColor = "#000000";
+let currentPixelColor = "#000000";
 
 let drawingPenWidth = 5;
 let drawingPenOpacity = 0.7;
-const screenCaptureImage = new Image();
+let screenCaptureImage = new Image();
 
 const STATES = {
   HIDDEN: 0, // app in background
@@ -65,28 +63,36 @@ let currentState = STATES.HIDDEN;
 // Should represent all the current windows open
 let windowsRectangles = [];
 
+const magnifierCanvas = document.createElement("canvas");
+const magnifierContext = magnifierCanvas.getContext("2d");
+
 function render() {
-  update();
+  if(screenCaptureImage === null) {
+    return;
+  }
+  
+  ctx.drawImage(screenCaptureImage, 0, 0);
 
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(screenCaptureImage, 0, 0);
 
   // Render drawings
   if (currentState !== STATES.HIDDEN) {
 
-    ctx.lineCap = "round";
+    if (drawnLines.length > 0) {
+      ctx.lineCap = "round";
+      
+      for (let i = 0; i < drawnLines.length; i++) {
+        ctx.strokeStyle = drawnLines[i].drawingColor;
+        ctx.globalAlpha = drawnLines[i].drawingPenOpacity;
+        ctx.lineWidth = drawnLines[i].drawingPenWidth;
 
-    for (let i = 0; i < drawnLines.length; i++) {
-      ctx.strokeStyle = drawnLines[i].drawingColor;
-      ctx.globalAlpha = drawnLines[i].drawingPenOpacity;
-      ctx.lineWidth = drawnLines[i].drawingPenWidth;
-
-      ctx.beginPath();
-      ctx.moveTo(drawnLines[i].points[0].x, drawnLines[i].points[0].y);
-      for (let j = 1; j < drawnLines[i].points.length; j++) {
-        ctx.lineTo(drawnLines[i].points[j].x, drawnLines[i].points[j].y);
+        ctx.beginPath();
+        ctx.moveTo(drawnLines[i].points[0].x, drawnLines[i].points[0].y);
+        for (let j = 1; j < drawnLines[i].points.length; j++) {
+          ctx.lineTo(drawnLines[i].points[j].x, drawnLines[i].points[j].y);
+        }
+        ctx.stroke();
       }
-      ctx.stroke();
     }
 
     if (currentDrawingPoints.points.length > 1) {
@@ -111,9 +117,6 @@ function render() {
   if (currentState === STATES.DISPLAYED || currentState === STATES.SELECTING || currentState == STATES.CAPTURING_WINDOWS) {
     ctx.font = config.font;
     ctx.fillStyle = config.colors.overlay;
-
-    const magnifierCanvas = document.createElement("canvas");
-    const magnifierContext = magnifierCanvas.getContext("2d");
 
     const pixelSize = config.magnifier.renderSize / config.magnifier.captureSize;
 
@@ -235,7 +238,7 @@ function render() {
     ctx.textAlign = "center";
 
     ctx.fillText("X:" + mousePos.x + ", Y:" + mousePos.y, mousePositionDisplay.x, mousePositionDisplay.y);
-    ctx.fillText(currentPixelColor, mousePositionDisplay.x, mousePositionDisplay.y + 18);
+    ctx.fillText(currentPixelColor + " - " + ntc.name(currentPixelColor)[1], mousePositionDisplay.x, mousePositionDisplay.y + 18);
     ctx.fillStyle = currentPixelColor;
     ctx.fillRect(mousePositionDisplay.x - 4, mousePositionDisplay.y + 24, 16, 16);
 
@@ -250,12 +253,8 @@ function render() {
     screenshotCtx.drawImage(canvas, selectionRect.x1, selectionRect.y1, selectionRect.width, selectionRect.height, 0, 0, selectionRect.width, selectionRect.height);
     file.saveAndCopyCanvasImage("./images/" + file.getFileName() + ".png", screenshotCanvas);
 
-    currentWindow.hide();
     currentState = STATES.START_HIDING;
-  }
-
-  if (currentState !== STATES.HIDDEN) {
-    requestAnimationFrame(render);
+    update();
   }
 
   if (config.uploadToImgur && currentState != STATES.SELECTING) {
@@ -268,7 +267,7 @@ function render() {
   if (currentState === STATES.DRAW_LINES) {
     ctx.fillStyle = drawingColor;
     ctx.globalAlpha = drawingPenOpacity;
-    
+
     ctx.beginPath();
     ctx.ellipse(mousePos.x, mousePos.y, drawingPenWidth / 2, drawingPenWidth / 2, 0, 2 * Math.PI, 0);
     ctx.fill();
@@ -282,8 +281,6 @@ function sortSuitableWindows(a, b) {
 }
 
 function update() {
-  tick++;
-
   switch (currentState) {
     case STATES.START_SELECTION:
       mouseDownPos.x = mousePos.x;
@@ -291,6 +288,9 @@ function update() {
       currentState = STATES.SELECTING;
       break;
     case STATES.START_HIDING:
+      screenCaptureImage = null;
+      canvas.width = 1;
+      canvas.height = 1;
       currentWindow.hide();
       currentState = STATES.HIDDEN;
       break;
@@ -300,9 +300,9 @@ function update() {
   }
 
   if (currentState == STATES.CAPTURING_WINDOWS && windowsRectangles.length > 0) {
-    let closestWindowCenterDistance = +Infinity;
     let winRectangle = windowsRectangles[0];
     let suitableRectangles = [];
+
     for (let i = 0; i < windowsRectangles.length; ++i) {
       let rect = windowsRectangles[i];
       let dist = Math.pow(rect.x + rect.w / 2 - mousePos.x, 2) + Math.pow(rect.y + rect.h / 2 - mousePos.y, 2);
@@ -312,7 +312,7 @@ function update() {
           d: dist,
           s: rect.w * rect.h
         });
-        closestWindowCenterDistance = dist;
+
         winRectangle = rect;
       }
     }
@@ -342,11 +342,11 @@ function update() {
 }
 
 function screenCaptured(imgPath, width, height) {
+  screenCaptureImage = new Image();
   screenCaptureImage.src = imgPath;
   screenCaptureImage.onload = () => {
-    fs.unlink(imgPath, () => {});
+    fs.unlink(imgPath, () => { });
 
-    let screenPos = remote.screen.getCursorScreenPoint();
     canvas.width = width;
     canvas.height = height;
 

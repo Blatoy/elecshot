@@ -3,12 +3,16 @@ const {
   BrowserWindow
 } = require('electron');
 
+app.disableHardwareAcceleration();
+
 global.BASE_PATH = app.getAppPath();
 
 // Keep a global reference of the window object
 let win;
 
 function createWindow() {
+  app.allowRendererProcessReuse = true;
+
   // Create the browser window
   win = new BrowserWindow({
     width: 800,

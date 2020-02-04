@@ -11,6 +11,7 @@ function onMouseMove(e) {
   mousePos.x = (e.clientX - rect.left);
   mousePos.y = (e.clientY - rect.top);
   canvas.style.cursor = "crosshair";
+
   switch (currentState) {
     case STATES.DRAWING_LINES:
       currentDrawingPoints.points.push({
@@ -20,6 +21,9 @@ function onMouseMove(e) {
       });
       break;
   }
+
+  update();
+  requestAnimationFrame(render);
 }
 
 function onMouseWheel(e) {
@@ -55,6 +59,9 @@ function onMouseDown(e) {
       currentState = STATES.DRAWING_LINES;
       break;
   }
+
+  update();
+  requestAnimationFrame(render);
 }
 
 function onMouseUp(e) {
@@ -79,6 +86,8 @@ function onMouseUp(e) {
       }
       break;
   }
+
+  update();
 }
 
 function onKeyDown(e) {
@@ -190,6 +199,9 @@ function onKeyDown(e) {
       config.uploadToImgur = !config.uploadToImgur;
       break;
   }
+
+  update();
+  requestAnimationFrame(render);
 }
 
 function onBeforeUnload() {
@@ -197,9 +209,6 @@ function onBeforeUnload() {
 }
 
 function onCaptureShortcut() {
-  let screenPos = remote.screen.getCursorScreenPoint();
-  let currentDisplay = remote.screen.getDisplayNearestPoint(screenPos);
-
   drawnLines = [];
 
   screenshot.listDisplays().then((displays) => {
