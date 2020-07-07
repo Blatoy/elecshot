@@ -12,7 +12,7 @@
   "license": "ISC",
   "bugs": {},
   "devDependencies": {
-    "electron": "^8.0.0"
+    "electron": "^8.2.4"
   },
   "dependencies": {
     "imgur": "^0.3.1",
